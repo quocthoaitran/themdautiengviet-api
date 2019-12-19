@@ -37,22 +37,14 @@ def predict(sentences):
 
         for i in tqdm(range(num_batches), desc="Inference: "):
             indices = np.arange(i*batch_size, min((i+1)*batch_size, len(X)))
-            print("indices", indices)
             step = 0
             max_steps = math.ceil((np.max(actual_lengths[indices]) - hp.offset)/(hp.maxlen - hp.offset))
             max_steps = max(1, max_steps)
-            print("Max step", max_steps)
             for step in range(max_steps):
                 end = min(step*(hp.maxlen - hp.offset) + hp.maxlen, max(X.shape[1], hp.maxlen))
                 start = end - hp.maxlen
 
-                print("Shape X[1]", end)
-
                 x = X[indices, start: end]
-                print("XXXXXXXXXXX")
-                print(X)
-                print("xxxxxxxxxx")
-                print(x.shape)
                 _preds = sess.run(g.preds, {g.x: x, g.dropout: False})
                 if step > 0:
                     Y_preds[indices, start+hp.offset//2:end] = _preds[:, hp.offset//2:]
@@ -62,8 +54,7 @@ def predict(sentences):
         Y_preds = Y_preds[np.argsort(sorted_lengths)]
         result = ""
         for source, preds, actual_length in zip(sources, Y_preds, actual_lengths):
-            formatted_pred = [idx2tgt[idx] if src2idx.get(source[id],1) > 8 else source[id] for id, idx in enumerate(preds[:actual_length])] 
-            print(formatted_pred)  
+            formatted_pred = [idx2tgt[idx] if src2idx.get(source[id],1) > 8 else source[id] for id, idx in enumerate(preds[:actual_length])]  
             sentence = " ".join(formatted_pred)
             result = result + " " + sentence
         return result
